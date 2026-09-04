@@ -1,357 +1,193 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preview - Renove Barbearia</title>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1E1E1E;
-            --border-color: #333333;
-            --gold: #D4AF37;
-            --text-color: #E0E0E0;
-            --text-muted: #A0A0A0;
-            --red: #EF553B;
-            --green: #00CC96;
-        }
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
 
-        * {
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+# Configuração da página
+st.set_page_config(page_title="Renove Barbearia - Gestão", page_icon="💈", layout="wide")
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            width: 100%;
-        }
-
-        /* Topo / Header */
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 20px;
-        }
-
-        .header img {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--gold);
-        }
-
-        .header h1 {
-            font-size: 1.5rem;
-            color: #FFFFFF;
-            font-weight: 700;
-        }
-
-        /* Abas */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-
-        .tab-button {
-            background-color: var(--card-bg);
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-
-        .tab-button.active {
-            background-color: var(--gold);
-            color: #121212;
-            border-color: var(--gold);
-        }
-
-        /* Conteúdo das Abas */
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Grid de Cards */
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-        }
-
-        .card-label {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .card-value {
-            font-size: 1.6rem;
-            color: var(--gold);
-            font-weight: 700;
-        }
-
-        .card-delta {
-            font-size: 0.8rem;
-            color: var(--green);
-            margin-top: 5px;
-        }
-
-        /* Barra de Progresso */
-        .progress-bar-container {
-            background-color: var(--border-color);
-            border-radius: 10px;
-            height: 12px;
-            width: 100%;
-            overflow: hidden;
-            margin: 12px 0 8px 0;
-        }
-
-        .progress-bar-fill {
-            background-color: var(--gold);
-            height: 100%;
-            width: 43%; /* Exemplo de progresso */
-            border-radius: 10px;
-        }
-
-        /* Tabela Exemplo */
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.9rem;
-        }
-
-        th {
-            background-color: #252525;
-            color: var(--gold);
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        .tag-entrada {
-            color: var(--green);
-            font-weight: bold;
-        }
-
-        .tag-saida {
-            color: var(--red);
-            font-weight: bold;
-        }
-
-        @media (max-width: 600px) {
-            .header {
-                flex-direction: column;
-                text-align: center;
-            }
-            .grid-3, .grid-2 {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <!-- Header com Logo -->
-    <div class="header">
-        <img src="https://lh3.googleusercontent.com/d/1000295311.png" alt="Renove Barbearia Logo" onerror="this.src='https://via.placeholder.com/80/1E1E1E/D4AF37?text=💈'">
-        <div>
-            <h1>Renove Barbearia — Gestão & Caixa</h1>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Painel de Controle Financeiro</p>
-        </div>
-    </div>
-
-    <!-- Navegação por Abas -->
-    <div class="tabs">
-        <button class="tab-button active" onclick="switchTab('visao-geral', this)">📊 Visão Geral</button>
-        <button class="tab-button" onclick="switchTab('provisoes', this)">🛡️ Provisões & Metas</button>
-        <button class="tab-button" onclick="switchTab('lancamentos', this)">📄 Lançamentos</button>
-    </div>
-
-    <!-- Aba 1: Visão Geral -->
-    <div id="visao-geral" class="tab-content active">
-        <div class="grid-3">
-            <div class="card">
-                <div class="card-label">Faturamento Bruto</div>
-                <div class="card-value">R$ 2.150,00</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Total Despesas</div>
-                <div class="card-value" style="color: var(--red);">R$ 420,00</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Lucro Líquido</div>
-                <div class="card-value">R$ 1.730,00</div>
-                <div class="card-delta">↑ 80.5% Margem</div>
-            </div>
-        </div>
-
-        <div class="grid-2">
-            <div class="card">
-                <div class="card-label">Ticket Médio</div>
-                <div class="card-value">R$ 43,00</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Atendimentos Realizados</div>
-                <div class="card-value">50 clientes</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Aba 2: Provisões & Metas -->
-    <div id="provisoes" class="tab-content">
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-label">🎯 Progresso da Meta Mensal</div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill"></div>
-            </div>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">Alcançado: <strong style="color: #FFF;">R$ 2.150,00</strong> de <strong style="color: #FFF;">R$ 5.000,00</strong> (43.0%)</p>
-        </div>
-
-        <h3 style="color: var(--gold); margin-bottom: 15px; font-size: 1.1rem;">🛡️ Reservas Automáticas</h3>
-        
-        <div class="grid-2">
-            <div class="card">
-                <div class="card-label">Dízimo (10%)</div>
-                <div class="card-value">R$ 215,00</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Reserva de Emergência (5%)</div>
-                <div class="card-value">R$ 107,50</div>
-            </div>
-        </div>
-
-        <div class="grid-3">
-            <div class="card">
-                <div class="card-label">Manutenção / Lâminas (5%)</div>
-                <div class="card-value">R$ 107,50</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Repasse Colaboradores</div>
-                <div class="card-value">R$ 350,00</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Provisão DAS-MEI</div>
-                <div class="card-value">R$ 75,00</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Aba 3: Lançamentos -->
-    <div id="lancamentos" class="tab-content">
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Tipo</th>
-                        <th>Categoria</th>
-                        <th>Descrição</th>
-                        <th>Valor</th>
-                        <th>Pagamento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>2026-04-18</td>
-                        <td><span class="tag-entrada">Entrada</span></td>
-                        <td>Serviços</td>
-                        <td>Corte Social + Barba</td>
-                        <td>R$ 60,00</td>
-                        <td>Pix</td>
-                    </tr>
-                    <tr>
-                        <td>2026-04-18</td>
-                        <td><span class="tag-entrada">Entrada</span></td>
-                        <td>Serviços</td>
-                        <td>Corte Degradê</td>
-                        <td>R$ 40,00</td>
-                        <td>Cartão de Débito</td>
-                    </tr>
-                    <tr>
-                        <td>2026-04-17</td>
-                        <td><span class="tag-saida">Saída</span></td>
-                        <td>Insumos</td>
-                        <td>Lâminas e Pomadas</td>
-                        <td>R$ 120,00</td>
-                        <td>Pix</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script>
-    function switchTab(tabId, element) {
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.classList.remove('active');
-        });
-        
-        document.getElementById(tabId).classList.add('active');
-        element.classList.add('active');
+# Estilo CSS Personalizado (Dark Premium / Gold & Charcoal)
+st.markdown("""
+<style>
+    .main {
+        background-color: #121212;
+        color: #E0E0E0;
     }
-</script>
+    [data-testid="stMetric"] {
+        background-color: #1E1E1E;
+        border: 1px solid #333333;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+    }
+    [data-testid="stMetricLabel"] {
+        color: #A0A0A0 !important;
+        font-weight: 600;
+    }
+    [data-testid="stMetricValue"] {
+        color: #D4AF37 !important;
+        font-weight: 700;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #1E1E1E;
+        border-radius: 8px;
+        color: #A0A0A0;
+        padding: 10px 16px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #D4AF37 !important;
+        color: #121212 !important;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-</body>
-</html>
+# TOPO COM LOGO E TÍTULO
+col_logo, col_titulo = st.columns([1, 4])
+with col_logo:
+    try:
+        st.image("logo.png", width=120)
+    except:
+        st.write("💈")
+
+with col_titulo:
+    st.title("Renove Barbearia — Gestão & Caixa")
+
+st.markdown("---")
+
+# Base de Dados na Sessão
+if "df" not in st.session_state:
+    st.session_state.df = pd.DataFrame(columns=[
+        "Data", "Tipo", "Categoria", "Descricao", "Valor", "Meio", "Clientes", "Comissao_Pct"
+    ])
+
+# MENU LATERAL
+try:
+    st.sidebar.image("logo.png", use_container_width=True)
+except:
+    pass
+
+st.sidebar.header("➕ Novo Lançamento")
+tipo = st.sidebar.selectbox("Tipo de Movimentação", ["Entrada", "Saída"])
+
+if tipo == "Entrada":
+    categoria = st.sidebar.selectbox("Categoria", ["Serviços", "Produtos", "Outros"])
+    comissao_pct = st.sidebar.number_input("Comissão Colaborador (%)", min_value=0.0, max_value=100.0, value=0.0, step=5.0)
+else:
+    categoria = st.sidebar.selectbox("Categoria", ["Comissões", "Insumos", "Estrutura", "Manutenção", "Dízimo", "DAS-MEI", "Outros"])
+    comissao_pct = 0.0
+
+descricao = st.sidebar.text_input("Descrição (ex: Corte Social)")
+valor = st.sidebar.number_input("Valor (R$)", min_value=0.0, value=0.0, step=5.0)
+meio = st.sidebar.selectbox("Meio de Pagamento", ["Pix", "Cartão de Crédito", "Cartão de Débito", "Dinheiro"])
+clientes = st.sidebar.number_input("Atendimentos", min_value=0, value=1 if tipo == "Entrada" else 0)
+data = st.sidebar.date_input("Data", datetime.today())
+
+if st.sidebar.button("💾 Salvar Registro"):
+    novo_dado = pd.DataFrame([{
+        "Data": str(data),
+        "Tipo": tipo,
+        "Categoria": categoria,
+        "Descricao": descricao,
+        "Valor": valor,
+        "Meio": meio,
+        "Clientes": clientes,
+        "Comissao_Pct": comissao_pct
+    }])
+    st.session_state.df = pd.concat([st.session_state.df, novo_dado], ignore_index=True)
+    st.sidebar.success("Lançamento salvo!")
+
+st.sidebar.markdown("---")
+meta_mensal = st.sidebar.number_input("Target Meta Mensal (R$)", min_value=1000.0, value=5000.0, step=500.0)
+
+df = st.session_state.df.copy()
+
+if not df.empty:
+    df["Data"] = pd.to_datetime(df["Data"])
+    df["Ano_Mes"] = df["Data"].dt.strftime("%Y-%m")
+    meses_disponiveis = df["Ano_Mes"].unique().tolist()
+    mes_selecionado = st.sidebar.selectbox("Mês de Referência", meses_disponiveis, index=len(meses_disponiveis)-1)
+    
+    df_filtrado = df[df["Ano_Mes"] == mes_selecionado].copy()
+    
+    entradas = df_filtrado[df_filtrado["Tipo"] == "Entrada"]["Valor"].sum()
+    saidas = df_filtrado[df_filtrado["Tipo"] == "Saída"]["Valor"].sum()
+    
+    dizimo = entradas * 0.10
+    reserva_emergencia = entradas * 0.05
+    manutencao = entradas * 0.05
+    das_mei = 75.00
+    
+    df_filtrado["Valor_Comissao"] = (df_filtrado["Valor"] * df_filtrado["Comissao_Pct"]) / 100.0
+    total_comissoes = df_filtrado[df_filtrado["Tipo"] == "Entrada"]["Valor_Comissao"].sum()
+    
+    lucro_liquido = entradas - saidas
+    margem_lucro = (lucro_liquido / entradas * 100) if entradas > 0 else 0.0
+    total_clientes = df_filtrado[df_filtrado["Tipo"] == "Entrada"]["Clientes"].sum()
+    ticket_medio = (entradas / total_clientes) if total_clientes > 0 else 0.0
+
+else:
+    entradas = saidas = dizimo = reserva_emergencia = manutencao = total_comissoes = lucro_liquido = margem_lucro = ticket_medio = 0.0
+    das_mei = 75.00
+    total_clientes = 0
+    df_filtrado = pd.DataFrame()
+
+# NAVEGAÇÃO EM ABAS
+aba1, aba2, aba3 = st.tabs(["📊 Visão Geral", "🛡️ Provisões & Metas", "📄 Lançamentos"])
+
+with aba1:
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Faturamento Bruto", f"R$ {entradas:,.2f}")
+    c2.metric("Total Despesas", f"R$ {saidas:,.2f}")
+    c3.metric("Lucro Líquido", f"R$ {lucro_liquido:,.2f}", delta=f"{margem_lucro:.1f}% Margem")
+    
+    c4, c5 = st.columns(2)
+    c4.metric("Ticket Médio", f"R$ {ticket_medio:,.2f}")
+    c5.metric("Atendimentos", f"{total_clientes} clientes")
+    
+    st.markdown("---")
+    
+    if not df_filtrado.empty:
+        col_g1, col_g2 = st.columns(2)
+        with col_g1:
+            st.subheader("📈 Fluxo Diário")
+            df_graf = df_filtrado.copy()
+            df_graf["Data_Dia"] = df_graf["Data"].dt.strftime("%Y-%m-%d")
+            df_diario = df_graf.groupby(["Data_Dia", "Tipo"])["Valor"].sum().reset_index()
+            fig_linha = px.line(df_diario, x="Data_Dia", y="Valor", color="Tipo", template="plotly_dark",
+                                color_discrete_map={"Entrada": "#D4AF37", "Saída": "#EF553B"})
+            st.plotly_chart(fig_linha, use_container_width=True)
+        
+        with col_g2:
+            st.subheader("📊 Categorias")
+            fig_pizza = px.pie(df_filtrado, values="Valor", names="Categoria", hole=0.4, template="plotly_dark")
+            st.plotly_chart(fig_pizza, use_container_width=True)
+
+with aba2:
+    st.subheader("🎯 Progresso da Meta")
+    progresso = min(float(entradas / meta_mensal), 1.0) if meta_mensal > 0 else 0.0
+    st.progress(progresso)
+    st.caption(f"Alcançado: **R$ {entradas:,.2f}** de **R$ {meta_mensal:,.2f}** ({progresso * 100:.1f}%)")
+    
+    st.markdown("---")
+    st.subheader("🛡️ Reservas Automáticas")
+    p1, p2 = st.columns(2)
+    p1.metric("Dízimo (10%)", f"R$ {dizimo:,.2f}")
+    p2.metric("Reserva Emergência (5%)", f"R$ {reserva_emergencia:,.2f}")
+    
+    p3, p4, p5 = st.columns(3)
+    p3.metric("Manutenção/Lâminas (5%)", f"R$ {manutencao:,.2f}")
+    p4.metric("Repasse Colaboradores", f"R$ {total_comissoes:,.2f}")
+    p5.metric("Provisão DAS-MEI", f"R$ {das_mei:,.2f}")
+
+with aba3:
+    st.subheader("📄 Histórico de Lançamentos")
+    if not df_filtrado.empty:
+        st.dataframe(df_filtrado.sort_values(by="Data", ascending=False), use_container_width=True)
+        csv = df_filtrado.to_csv(index=False).encode('utf-8')
+        st.download_button("📥 Baixar Relatório (CSV)", data=csv, file_name="caixa_barbearia.csv", mime="text/csv")
+    else:
+        st.info("Nenhum lançamento no período.")
