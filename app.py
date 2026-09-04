@@ -19,17 +19,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Topo com Logo e Título
-col_logo, col_titulo = st.columns([1, 4])
-with col_logo:
-    try:
-        st.image("logo.png", width=120)
-    except:
-        st.write("💈")
-
-with col_titulo:
-    st.title("Renove Barbearia — Gestão & Caixa")
-
+# Topo com Título
+st.title("Renove Barbearia — Gestão & Caixa")
 st.markdown("---")
 
 # Conexão com Google Sheets
@@ -150,12 +141,12 @@ with aba1:
             df_diario = df_graf.groupby(["Data_Dia", "Tipo"])["Valor"].sum().reset_index()
             fig_linha = px.line(df_diario, x="Data_Dia", y="Valor", color="Tipo", template="plotly_dark",
                                 color_discrete_map={"Entrada": "#D4AF37", "Saída": "#EF553B"})
-            st.plotly_chart(fig_linha, width=None)
+            st.plotly_chart(fig_linha, use_container_width=True)
         
         with col_g2:
             st.subheader("📊 Categorias")
             fig_pizza = px.pie(df_filtrado, values="Valor", names="Categoria", hole=0.4, template="plotly_dark")
-            st.plotly_chart(fig_pizza, width=None)
+            st.plotly_chart(fig_pizza, use_container_width=True)
 
 with aba2:
     st.subheader("🎯 Progresso da Meta")
