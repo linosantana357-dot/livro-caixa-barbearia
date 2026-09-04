@@ -19,7 +19,7 @@ tipo = st.sidebar.selectbox("Tipo de Movimentação", ["Entrada", "Saída"])
 if tipo == "Entrada":
     categoria = st.sidebar.selectbox("Categoria", ["Serviços", "Produtos", "Outros"])
 else:
-    categoria = st.sidebar.selectbox("Categoria", ["Comissões", "Insumos", "Estrutura", "Manutenção", "Outros"])
+    categoria = st.sidebar.selectbox("Categoria", ["Comissões", "Insumos", "Estrutura", "Manutenção", "Dízimo", "Outros"])
 
 descricao = st.sidebar.text_input("Descrição (ex: Corte Social / Pomada)")
 valor = st.sidebar.number_input("Valor R$", min_value=0.0, value=0.0, step=5.0)
@@ -46,6 +46,7 @@ if not df.empty:
     df["Data"] = pd.to_datetime(df["Data"])
     entradas = df[df["Tipo"] == "Entrada"]["Valor"].sum()
     saidas = df[df["Tipo"] == "Saída"]["Valor"].sum()
+    dizimo = entradas * 0.10
     lucro_liquido = entradas - saidas
     margem_lucro = (lucro_liquido / entradas * 100) if entradas > 0 else 0.0
     total_clientes = df[df["Tipo"] == "Entrada"]["Clientes"].sum()
@@ -53,17 +54,19 @@ if not df.empty:
 else:
     entradas = 0.0
     saidas = 0.0
+    dizimo = 0.0
     lucro_liquido = 0.0
     margem_lucro = 0.0
     total_clientes = 0
     ticket_medio = 0.0
 
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("Faturamento Bruto", f"R$ {entradas:,.2f}")
 col2.metric("Total Despesas", f"R$ {saidas:,.2f}")
-col3.metric("Lucro Líquido", f"R$ {lucro_liquido:,.2f}", delta=f"{margem_lucro:.1f}% Margem")
-col4.metric("Ticket Médio", f"R$ {ticket_medio:,.2f}")
-col5.metric("Atendimentos", f"{total_clientes} clientes")
+col3.metric("Dízimo (10%)", f"R$ {dizimo:,.2f}")
+col4.metric("Lucro Líquido", f"R$ {lucro_liquido:,.2f}", delta=f"{margem_lucro:.1f}% Margem")
+col5.metric("Ticket Médio", f"R$ {ticket_medio:,.2f}")
+col6.metric("Atendimentos", f"{total_clientes} clientes")
 
 st.markdown("---")
 
@@ -72,10 +75,12 @@ if not df.empty:
 
     with col_graf1:
         st.subheader("📈 Evolução Financeira Diária")
-        df_diario = df.groupby(["Data", "Tipo"])["Valor"].sum().reset_index()
+        df_graf = df.copy()
+        df_graf["Data_Dia"] = df_graf["Data"].dt.strftime("%Y-%m-%d")
+        df_diario = df_graf.groupby(["Data_Dia", "Tipo"])["Valor"].sum().reset_index()
         fig_linha = px.line(
             df_diario, 
-            x="Data", 
+            x="Data_Dia", 
             y="Valor", 
             color="Tipo", 
             markers=True,
@@ -92,4 +97,3 @@ if not df.empty:
     st.dataframe(df.sort_values(by="Data", ascending=False), use_container_width=True)
 else:
     st.info("Nenhum lançamento cadastrado ainda. Utilize o menu lateral para adicionar a primeira movimentação!")
-                                                                                                                                            
